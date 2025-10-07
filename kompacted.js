@@ -1,61 +1,122 @@
 class Kompacted{
-    
-    static template_list = {};
-    static loadKompacts(){
-        let kompacts = document.getElementsByTagName("kompact");
-        
-        while(kompacts.length!==0){
-            let name = kompacts[0].attributes['name'].value;
-            let template = this.getTemplate(name);
-            let komp = this.createKomp(template);
-            this.setKomp(kompacts[0], komp)
-        }
-    }
-    static setKomp(target, komp){
-        target.replaceWith(komp);
+
+                            // USER SIDE //
+
+    // Sets the templates (& load all Kompacts using said Templates)
+    set(templates, scope=undefined){
+        templates(this);
+        if(!isNull(scope)) {
+            this.load(scope);
+        };
     }
 
-    static createKomp(template){
+    // Adds a new template to the list
+    new(name, html, type=undefined, func=()=>{}){
+        let template = new Kompacted.template(name, html, type, func);
+        this.addTemplate(template);
+        return template;
+    }
+
+    edit(name, html, type=undefined, func=()=>{}){
+        let template = new Kompacted.template(name, html, type, func);
+        this.editTemplate(name, template);
+    }
+
+    // (re)Loads all the Komps within a given scope
+    load(scope=undefined){
+        if(isNull(scope)) scope = document;
+        this.loadKompacts(scope);
+    }
+
+    
+
+
+                            // DEV SIDE //
+
+    //// KOMPS ////
+    // Gets all Kompact tags within the scope and turns them into Komps
+    loadKompacts(scope){
+        let kompacts = scope.getElementsByTagName("kompact");
+        
+        for(let i = 0; i<kompacts.length; i++){
+            let name = kompacts[i].attributes['name'].value;
+            let template = this.getTemplate(name);
+            let komp = this.createKomp(template);
+            this.setKomp(kompacts[i], komp);
+        }
+    }
+
+    // Adds the node for our Komp as a children of its HTML Kompact tag
+    setKomp(target, komp){
+        target.replaceChildren(komp);
+    }
+
+    // Turns a template into a working Komp (node)
+    createKomp(template){
         var komp = document.createElement(template.name);
         komp.innerHTML = template.html;
-        if(template.type!==undefined){
-            // komp is undefinef
-            console.log(komp)
-            komp.addEventListener(template.type, template.func(komp));
+        if(!isNull(template.type)){
+            komp.addEventListener(template.type, ()=>{template.func(komp)});
         }
         return komp;
     }
 
-    static getTemplate(name){
-        if(!Kompacted.template_list.hasOwnProperty(name)) {
-            throw KompactedErrors.VALUE_NOT_FOUND+` '${name}' `;
+
+    //// TEMPLATES ////
+    // Get template from template list using name
+    getTemplate(name){
+        if(!this.template_list.hasOwnProperty(name)) {
+            throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${name}') `;
         }
-        return Kompacted.template_list[name];
+        return this.template_list[name];
     }
-    
-    static set(func){
-        func();
-        this.loadKompacts();
+
+    // Adds a given template to the saved list (if it doesn't already exists)
+    addTemplate(template){
+        if(this.template_list.hasOwnProperty(template.name)) {
+            throw Kompacted.Errors.VALUE_EXISTS+` ('${template.name}') `;
+        }
+        this.template_list[template.name] = template;
     }
-    
-    static template = class template {
-        constructor(name, html, type=KompactedValues.unknown_value, func=()=>{condole.log("hd")}) {
+
+    // Removes a given template from the saved list (if it exists)
+    removeTemplate(name){
+        if(!this.template_list.hasOwnProperty(name)) {
+            throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${name}') `;
+        }
+        delete this.template_list[name];
+    }
+
+    // Replace a given template in the saved list with a new one (if it exists)
+    editTemplate(name, template){
+        if(!this.template_list.hasOwnProperty(name)) {
+            throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${name}') `;
+        }
+        this.template_list[template.name] = template;
+    }
+
+    // Saves all templates created
+    template_list = {};
+
+    static template = class {
+        constructor(name, html, type=undefined, func=()=>{}) {
             this.name = name;
             this.html = html;
-            if(type!==KompactedValues.unknown_value) {
+            if(!isNull(type)) {
                 this.type = type;
                 this.func = func;
             }
-            Kompacted.template_list[name] = this;
         }
+    }
+
+    static Errors = class{
+        static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
+        static VALUE_EXISTS = "[ERROR]: Value exists already";  
+        static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
     }
 }
 
-class KompactedErrors{
-    static VALUE_NOT_FOUND = "[ERROR]: Could not find value";  
-    static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
-}
-
-class KompactedValues{
-    static unknown_value = "n/A";
+function isNull(object){
+    if(object === null || object === undefined || object === "" || (typeof(object)===typeof(0) && isNaN(object)) ) return true;
+    return false;
 }
