@@ -12,14 +12,16 @@ class Kompacted{
         }
     }
     static setKomp(target, komp){
-        target.replaceWith(komp.cloneNode(true));
+        target.replaceWith(komp);
     }
 
     static createKomp(template){
-        let komp = document.createElement(template.name);
+        var komp = document.createElement(template.name);
         komp.innerHTML = template.html;
-        if(template.func!=={}){
-            komp.addEventListener(template.type, template.func);
+        if(template.type!==undefined){
+            // komp is undefinef
+            console.log(komp)
+            komp.addEventListener(template.type, template.func(komp));
         }
         return komp;
     }
@@ -37,10 +39,10 @@ class Kompacted{
     }
     
     static template = class template {
-        constructor(name, html, type="n/A", func={}) {
+        constructor(name, html, type=KompactedValues.unknown_value, func=()=>{condole.log("hd")}) {
             this.name = name;
             this.html = html;
-            if(type!=="n/A") {
+            if(type!==KompactedValues.unknown_value) {
                 this.type = type;
                 this.func = func;
             }
@@ -52,4 +54,8 @@ class Kompacted{
 class KompactedErrors{
     static VALUE_NOT_FOUND = "[ERROR]: Could not find value";  
     static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
+}
+
+class KompactedValues{
+    static unknown_value = "n/A";
 }
