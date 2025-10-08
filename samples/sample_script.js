@@ -23,9 +23,9 @@ window.addEventListener("load", ()=>{
                         `
                     ); 
                 
-                KOMPACTED.load(document.getElementById("twos"));
+                KOMPACTED.load(document, true);
             }
         );
-    }, document)  
+    }, document.getElementById("twos"))  
 
 })

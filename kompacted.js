@@ -3,10 +3,10 @@ class Kompacted{
                             // USER SIDE //
 
     // Sets the templates (& load all Kompacts using said Templates)
-    set(templates, scope=undefined){
+    set(templates, scope=undefined, deep=false){
         templates(this);
         if(!isNull(scope)) {
-            this.load(scope);
+            this.load(scope, deep);
         };
     }
 
@@ -23,9 +23,9 @@ class Kompacted{
     }
 
     // (re)Loads all the Komps within a given scope
-    load(scope=undefined){
+    load(scope=undefined, deep=false){
         if(isNull(scope)) scope = document;
-        this.loadKompacts(scope);
+        this.loadKompacts(scope, deep);
     }
 
     
@@ -35,22 +35,36 @@ class Kompacted{
 
     //// KOMPS ////
     // Gets all Kompact tags within the scope and turns them into Komps
-    loadKompacts(scope){
+    loadKompacts(scope, deep=false){
         let kompacts = scope.getElementsByTagName("kompact");
         
-        for(let i = 0; i<kompacts.length; i++){
-            let name = kompacts[i].attributes['name'].value;
-            let template = this.getTemplate(name);
-            let komp = this.createKomp(template);
-            this.setKomp(kompacts[i], komp);
+        if(!deep) {
+            for (let i = 0; i < kompacts.length; i++) {
+                let name = kompacts[i].attributes['name'].value;
+                let komp = this.getKomp(name);
+                this.setKomp(kompacts[i], komp, deep);
+            }
+        } else {
+            while (kompacts.length !== 0) {
+                let name = kompacts[0].attributes['name'].value;
+                let komp = this.getKomp(name);
+                this.setKomp(kompacts[0], komp, deep);
+            }
         }
     }
 
     // Adds the node for our Komp as a children of its HTML Kompact tag
-    setKomp(target, komp){
-        target.replaceChildren(komp);
+    setKomp(target, komp, deep=false){
+        if(deep) target.replaceWith(komp);
+        else target.replaceChildren(komp);
     }
 
+    getKomp(name){
+        let template = this.getTemplate(name);
+        let komp = this.createKomp(template);
+        return komp;
+    }
+    
     // Turns a template into a working Komp (node)
     createKomp(template){
         var komp = document.createElement(template.name);
