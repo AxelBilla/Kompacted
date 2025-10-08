@@ -38,20 +38,33 @@ class Kompacted{
     loadKompacts(scope, deep=false){
         let kompacts = scope.getElementsByTagName("kompact");
         
-        for(let i = 0; i<kompacts.length; i++){
-            let name = kompacts[i].attributes['name'].value;
-            let template = this.getTemplate(name);
-            let komp = this.createKomp(template);
-            this.setKomp(kompacts[i], komp, deep);
+        if(!deep) {
+            for (let i = 0; i < kompacts.length; i++) {
+                let name = kompacts[i].attributes['name'].value;
+                let komp = this.getKomp(name);
+                this.setKomp(kompacts[i], komp, deep);
+            }
+        } else {
+            while (kompacts.length !== 0) {
+                let name = kompacts[0].attributes['name'].value;
+                let komp = this.getKomp(name);
+                this.setKomp(kompacts[0], komp, deep);
+            }
         }
     }
 
     // Adds the node for our Komp as a children of its HTML Kompact tag
     setKomp(target, komp, deep=false){
         if(deep) target.replaceWith(komp);
-        target.replaceChildren(komp);
+        else target.replaceChildren(komp);
     }
 
+    getKomp(name){
+        let template = this.getTemplate(name);
+        let komp = this.createKomp(template);
+        return komp;
+    }
+    
     // Turns a template into a working Komp (node)
     createKomp(template){
         var komp = document.createElement(template.name);
