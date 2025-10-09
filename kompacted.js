@@ -1,3 +1,6 @@
+const default_template_attribute = 'name';
+const load_event_name = 'load';
+
 class Kompacted{
 
                             // USER SIDE //
@@ -37,17 +40,15 @@ class Kompacted{
     // Gets all Kompact tags within the scope and turns them into Komps
     loadKompacts(scope, deep=false){
         let kompacts = scope.getElementsByTagName("kompact");
-        
+
         if(!deep) {
             for (let i = 0; i < kompacts.length; i++) {
-                let name = kompacts[i].attributes['name'].value;
-                let komp = this.getKomp(name);
+                let komp = this.getKomp(kompacts[i]);
                 this.setKomp(kompacts[i], komp, deep);
             }
         } else {
             while (kompacts.length !== 0) {
-                let name = kompacts[0].attributes['name'].value;
-                let komp = this.getKomp(name);
+                let komp = this.getKomp(kompacts[0]);
                 this.setKomp(kompacts[0], komp, deep);
             }
         }
@@ -59,19 +60,30 @@ class Kompacted{
         else target.replaceChildren(komp);
     }
 
-    getKomp(name){
+    getKomp(kompact){
+        let name = kompact.getAttribute(default_template_attribute);
         let template = this.getTemplate(name);
-        let komp = this.createKomp(template);
+        let komp = this.createKomp(template, kompact);
         return komp;
     }
     
     // Turns a template into a working Komp (node)
-    createKomp(template){
+    createKomp(template, origin_kompact=undefined){
         var komp = document.createElement(template.name);
         komp.innerHTML = template.html;
+         
+        if(origin_kompact!=null){
+            let attributes = origin_kompact.attributes;
+            for(let i=0; i<attributes.length; i++){
+                if(attributes[i].name!=default_template_attribute) komp.setAttribute(attributes[i].name, attributes[i].value);
+            }
+        }
+
         if(!isNull(template.type)){
             komp.addEventListener(template.type, ()=>{template.func(komp)});
+            if(template.type == load_event_name) komp.dispatchEvent(new Event(load_event_name));
         }
+
         return komp;
     }
 
