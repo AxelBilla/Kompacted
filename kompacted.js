@@ -141,15 +141,15 @@ class Kompacted{
     
     
     
-    static editDefaultValues(old, new){
+    static editDefaultValues(old_val, new_val){
         //check if new already exists as a value
-        switch(old){
+        switch(old_val){
             case Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE:
-                 Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE = new;
+                 Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE = new_val;
                  break;
             
             case Kompacted.DefaultValues.LOAD_EVENT_NAME:
-                 Kompacted.DefaultValues.LOAD_EVENT_NAME = new;
+                 Kompacted.DefaultValues.LOAD_EVENT_NAME = new_val;
                  break;
             
             default:
