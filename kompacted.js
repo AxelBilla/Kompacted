@@ -1,6 +1,3 @@
-const default_template_attribute = 'name';
-const load_event_name = 'load';
-
 class Kompacted{
 
                             // USER SIDE //
@@ -61,7 +58,7 @@ class Kompacted{
     }
 
     getKomp(kompact){
-        let name = kompact.getAttribute(default_template_attribute);
+        let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
         let template = this.getTemplate(name);
         let komp = this.createKomp(template, kompact);
         return komp;
@@ -75,13 +72,13 @@ class Kompacted{
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
             for(let i=0; i<attributes.length; i++){
-                if(attributes[i].name!=default_template_attribute) komp.setAttribute(attributes[i].name, attributes[i].value);
+                if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
             }
         }
 
         if(!isNull(template.type)){
             komp.addEventListener(template.type, ()=>{template.func(komp)});
-            if(template.type == load_event_name) komp.dispatchEvent(new Event(load_event_name));
+            if(template.type == Kompacted.DefaultValues.LOAD_EVENT_NAME) komp.dispatchEvent(new Event(Kompacted.DefaultValues.LOAD_EVENT_NAME));
         }
 
         return komp;
@@ -139,6 +136,33 @@ class Kompacted{
         static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
         static VALUE_EXISTS = "[ERROR]: Value exists already";  
         static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
+    }
+    
+    
+    
+    
+    static editDefaultValues(old, new){
+        //check if new already exists as a value
+        switch(old){
+            case Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE:
+                 Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE = new;
+                 break;
+            
+            case Kompacted.DefaultValues.LOAD_EVENT_NAME:
+                 Kompacted.DefaultValues.LOAD_EVENT_NAME = new;
+                 break;
+            
+            default:
+                  // warning msg
+                  break;
+        }
+    }
+    
+    static DefaultValues = class{
+        static LOAD_EVENT_NAME = "load";
+        static KOMPACT_NAME_ATTRIBUTE = "name";
+        static FOREACH_SOURCE_ATTRIBUTE = "src";
+        static FOREACH_AS_KOMP_ATTRIBUTE = "as";
     }
 }
 
