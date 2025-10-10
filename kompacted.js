@@ -97,7 +97,7 @@ class Kompacted{
     // Adds a given template to the saved list (if it doesn't already exists)
     addTemplate(template){
         if(this.template_list.hasOwnProperty(template.name)) {
-            throw Kompacted.Errors.VALUE_EXISTS+` ('${template.name}') `;
+            throw Kompacted.Errors.VALUE_ALREADY_EXISTS+` ('${template.name}') `;
         }
         this.template_list[template.name] = template;
     }
@@ -134,28 +134,30 @@ class Kompacted{
 
     static Errors = class{
         static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
-        static VALUE_EXISTS = "[ERROR]: Value exists already";  
+        static VALUE_OUT_OF_BOUNDS = "[ERROR]: Value out of bounds";
+        static VALUE_ALREADY_EXISTS = "[ERROR]: Value already exists";
         static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
     }
     
     
-    
-    
     static editDefaultValues(old_val, new_val){
-        //check if new already exists as a value
-        switch(old_val){
-            case Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE:
-                 Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE = new_val;
-                 break;
-            
-            case Kompacted.DefaultValues.LOAD_EVENT_NAME:
-                 Kompacted.DefaultValues.LOAD_EVENT_NAME = new_val;
-                 break;
-            
-            default:
-                  // warning msg
-                  break;
+        console.warn("(editDefaultValues): This method may cause unpredictable behaviours.");
+        
+        let key;
+        
+        if(typeOf(old_val) !== typeOf(7)){
+            for(let keys in Kompacted.DefaultValues){
+                if(Kompacted.DefaultValues[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
+                if(Kompacted.DefaultValues[keys]===old_val) key = keys;
+            }
+            if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
         }
+        else{
+            key = Kompacted.DefaultValues.getKeyByIndex(old_val);
+        }
+        
+        Kompacted.DefaultValues[key] = new_val;
+        
     }
     
     static DefaultValues = class{
@@ -163,6 +165,13 @@ class Kompacted{
         static KOMPACT_NAME_ATTRIBUTE = "name";
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
+        
+        static getKeyByIndex(index){
+            const values = Object.keys(this);
+            if(values.length < index || 0 > index) throw Kompacted.Errors.VALUE_OUT_OF_BOUNDS+` (${old_val})`;
+            return values[index];
+        }
+        
     }
 }
 
