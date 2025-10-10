@@ -37,17 +37,15 @@ class Kompacted{
     // Gets all Kompact tags within the scope and turns them into Komps
     loadKompacts(scope, deep=false){
         let kompacts = scope.getElementsByTagName("kompact");
-        
+
         if(!deep) {
             for (let i = 0; i < kompacts.length; i++) {
-                let name = kompacts[i].attributes['name'].value;
-                let komp = this.getKomp(name);
+                let komp = this.getKomp(kompacts[i]);
                 this.setKomp(kompacts[i], komp, deep);
             }
         } else {
             while (kompacts.length !== 0) {
-                let name = kompacts[0].attributes['name'].value;
-                let komp = this.getKomp(name);
+                let komp = this.getKomp(kompacts[0]);
                 this.setKomp(kompacts[0], komp, deep);
             }
         }
@@ -59,19 +57,30 @@ class Kompacted{
         else target.replaceChildren(komp);
     }
 
-    getKomp(name){
+    getKomp(kompact){
+        let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
         let template = this.getTemplate(name);
-        let komp = this.createKomp(template);
+        let komp = this.createKomp(template, kompact);
         return komp;
     }
     
     // Turns a template into a working Komp (node)
-    createKomp(template){
+    createKomp(template, origin_kompact=undefined){
         var komp = document.createElement(template.name);
         komp.innerHTML = template.html;
+         
+        if(origin_kompact!=null){
+            let attributes = origin_kompact.attributes;
+            for(let i=0; i<attributes.length; i++){
+                if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
+            }
+        }
+
         if(!isNull(template.type)){
             komp.addEventListener(template.type, ()=>{template.func(komp)});
+            if(template.type == Kompacted.DefaultValues.LOAD_EVENT_NAME) komp.dispatchEvent(new Event(Kompacted.DefaultValues.LOAD_EVENT_NAME));
         }
+
         return komp;
     }
 
@@ -88,7 +97,7 @@ class Kompacted{
     // Adds a given template to the saved list (if it doesn't already exists)
     addTemplate(template){
         if(this.template_list.hasOwnProperty(template.name)) {
-            throw Kompacted.Errors.VALUE_EXISTS+` ('${template.name}') `;
+            throw Kompacted.Errors.VALUE_ALREADY_EXISTS+` ('${template.name}') `;
         }
         this.template_list[template.name] = template;
     }
@@ -125,8 +134,44 @@ class Kompacted{
 
     static Errors = class{
         static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
-        static VALUE_EXISTS = "[ERROR]: Value exists already";  
+        static VALUE_OUT_OF_BOUNDS = "[ERROR]: Value out of bounds";
+        static VALUE_ALREADY_EXISTS = "[ERROR]: Value already exists";
         static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
+    }
+    
+    
+    static editDefaultValues(old_val, new_val){
+        console.warn("(editDefaultValues): This method may cause unpredictable behaviours.");
+        
+        let key;
+        
+        if(typeOf(old_val) !== typeOf(7)){
+            for(let keys in Kompacted.DefaultValues){
+                if(Kompacted.DefaultValues[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
+                if(Kompacted.DefaultValues[keys]===old_val) key = keys;
+            }
+            if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
+        }
+        else{
+            key = Kompacted.DefaultValues.getKeyByIndex(old_val);
+        }
+        
+        Kompacted.DefaultValues[key] = new_val;
+        
+    }
+    
+    static DefaultValues = class{
+        static LOAD_EVENT_NAME = "load";
+        static KOMPACT_NAME_ATTRIBUTE = "name";
+        static FOREACH_SOURCE_ATTRIBUTE = "src";
+        static FOREACH_AS_KOMP_ATTRIBUTE = "as";
+        
+        static getKeyByIndex(index){
+            const values = Object.keys(this);
+            if(values.length < index || 0 > index) throw Kompacted.Errors.VALUE_OUT_OF_BOUNDS+` (${old_val})`;
+            return values[index];
+        }
+        
     }
 }
 
