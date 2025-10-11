@@ -3,7 +3,7 @@ class Kompacted{
                             // USER SIDE //
 
     // Sets the templates (& load all Kompacts using said Templates)
-    set(templates, scope=undefined, deep=false){
+    new(templates, scope=undefined, deep=false){
         templates(this);
         if(!isNull(scope)) {
             this.load(scope, deep);
@@ -11,7 +11,7 @@ class Kompacted{
     }
 
     // Adds a new template to the list
-    new(name, html, type=undefined, func=()=>{}){
+    add(name, html, type=undefined, func=()=>{}){
         let template = new Kompacted.template(name, html, type, func);
         this.addTemplate(template);
         return template;
@@ -26,6 +26,11 @@ class Kompacted{
     load(scope=undefined, deep=false){
         if(isNull(scope)) scope = document;
         this.loadKompacts(scope, deep);
+        this.loadForeach(scope, deep);
+    }
+    
+    set(id, data_array){
+       this.setData(id, data_array); 
     }
 
     
@@ -50,24 +55,64 @@ class Kompacted{
             }
         }
     }
+    
+    loadForeach(scope, deep=false){
+        let foreach = scope.getElementsByTagName("foreach");
+        
+        if(!deep) {
+            for (let i = 0; i < foreach.length; i++) {
+                let data = this.getData(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
+                this.setKomps(foreach[i], data, deep);
+            }
+        } else {
+            while (foreach.length !== 0) {
+                let data = this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
+                this.setKomps(foreach[0], data, deep);
+            }
+        }
+    }
 
     // Adds the node for our Komp as a children of its HTML Kompact tag
     setKomp(target, komp, deep=false){
         if(deep) target.replaceWith(komp);
         else target.replaceChildren(komp);
     }
+    
+    setKomps(target, data, deep=false){
+        let komp_name = target.getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE);
+        
+        for(let entry in data){
+            let komp = this.getKomp(komp_name, data[entry]);
+            
+            if(!deep) target.appendChild(komp);
+            else target.parentNode.insertBefore(komp, target)
+        }
+        if(deep) target.remove();
+    }
 
-    getKomp(kompact){
-        let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
-        let template = this.getTemplate(name);
-        let komp = this.createKomp(template, kompact);
-        return komp;
+    getKomp(kompact, attributes=undefined){
+        if(typeof(kompact)!==typeof("u")){
+            let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
+            let template = this.getTemplate(name);
+            return this.createKomp(template, attributes, kompact);
+        }
+        else {
+            let template = this.getTemplate(kompact);
+            return this.createKomp(template, attributes);
+        }
     }
     
     // Turns a template into a working Komp (node)
-    createKomp(template, origin_kompact=undefined){
-        var komp = document.createElement(template.name);
+    createKomp(template, data=undefined, origin_kompact=undefined){
+        let komp = document.createElement(template.name);
         komp.innerHTML = template.html;
+        
+        if(!isNull(data)){
+            for(let attribute in data){
+                let attr_data = typeof(data[attribute]) === typeof({}) ? JSON.stringify(data[attribute]) : data[attribute];
+                komp.setAttribute(attribute, attr_data);
+            }
+        }
          
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
@@ -75,10 +120,12 @@ class Kompacted{
                 if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
             }
         }
-
+        
         if(!isNull(template.type)){
             komp.addEventListener(template.type, ()=>{template.func(komp)});
-            if(template.type == Kompacted.DefaultValues.LOAD_EVENT_NAME) komp.dispatchEvent(new Event(Kompacted.DefaultValues.LOAD_EVENT_NAME));
+            if(template.type == Kompacted.DefaultValues.LOAD_EVENT_NAME) {
+                komp.dispatchEvent(new Event(Kompacted.DefaultValues.LOAD_EVENT_NAME));
+            }
         }
 
         return komp;
@@ -120,6 +167,22 @@ class Kompacted{
 
     // Saves all templates created
     template_list = {};
+    
+    
+    
+    setData(identifier, array){
+        this.stored_data_arrays[identifier]=array;
+    }
+    
+    getData(identifier){
+        if(!this.stored_data_arrays.hasOwnProperty(identifier)) {
+            throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${identifier}') `;
+        }
+        return this.stored_data_arrays[identifier];
+    }
+
+    //
+    stored_data_arrays ={};
 
     static template = class {
         constructor(name, html, type=undefined, func=()=>{}) {
@@ -136,7 +199,7 @@ class Kompacted{
         static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
         static VALUE_OUT_OF_BOUNDS = "[ERROR]: Value out of bounds";
         static VALUE_ALREADY_EXISTS = "[ERROR]: Value already exists";
-        static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually"
+        static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually";
     }
     
     
@@ -145,7 +208,7 @@ class Kompacted{
         
         let key;
         
-        if(typeOf(old_val) !== typeOf(7)){
+        if(typeof(old_val) !== typeof(7)){
             for(let keys in Kompacted.DefaultValues){
                 if(Kompacted.DefaultValues[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
                 if(Kompacted.DefaultValues[keys]===old_val) key = keys;
@@ -165,6 +228,7 @@ class Kompacted{
         static KOMPACT_NAME_ATTRIBUTE = "name";
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
+        static FOREACH_KOMP_DATA_ATTRIBUTE = "loop-data";
         
         static getKeyByIndex(index){
             const values = Object.keys(this);
