@@ -17,6 +17,7 @@ class Kompacted{
         return template;
     }
 
+    // Replace an existing template with new data
     edit(name, html, type=undefined, func=()=>{}){
         let template = new Kompacted.template(name, html, type, func);
         this.editTemplate(name, template);
@@ -82,12 +83,13 @@ class Kompacted{
         }
     }
 
-    // Adds the node for our Komp as a children of its HTML Kompact tag
+    // Adds the node for our Komp as a children of its HTML Kompact tag OR replace its HTML Kompact tag (deep)
     setKomp(target, komp, deep=false){
         if(deep) target.replaceWith(komp);
         else target.replaceChildren(komp);
     }
     
+    // Adds a given amount (count/data amount) of nodes of a given Komp
     setKomps(target, data, deep=false){
         let komp_name = target.getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE);
         
@@ -111,6 +113,7 @@ class Kompacted{
         if(deep) target.remove();
     }
 
+    // Generates a given Komp from a given name/HTML node
     getKomp(kompact, attributes=undefined){
         if(typeof(kompact)!==typeof("u")){
             let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
@@ -190,11 +193,13 @@ class Kompacted{
     template_list = {};
     
     
-    
+    //// DATA ARRAYS ////
+    // Sets a space in the stored Data Arrays (identifier) for a given set of Data
     setData(identifier, array){
         this.stored_data_arrays[identifier]=array;
     }
     
+    // Get a Data Array by its identifier
     getData(identifier){
         if(!this.stored_data_arrays.hasOwnProperty(identifier)) {
             throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${identifier}') `;
@@ -202,9 +207,13 @@ class Kompacted{
         return this.stored_data_arrays[identifier];
     }
 
-    //
+    // Saves all necessary Data Arrays
     stored_data_arrays ={};
 
+    
+    
+    
+    //// UTILITIES ////
     static template = class {
         constructor(name, html, type=undefined, func=()=>{}) {
             this.name = name;
@@ -224,27 +233,6 @@ class Kompacted{
         static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually";
     }
     
-    
-    static editDefaultValues(old_val, new_val){
-        console.warn("(editDefaultValues): This method may cause unpredictable behaviours.");
-        
-        let key;
-        
-        if(typeof(old_val) !== typeof(7)){
-            for(let keys in Kompacted.DefaultValues){
-                if(Kompacted.DefaultValues[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
-                if(Kompacted.DefaultValues[keys]===old_val) key = keys;
-            }
-            if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
-        }
-        else{
-            key = Kompacted.DefaultValues.getKeyByIndex(old_val);
-        }
-        
-        Kompacted.DefaultValues[key] = new_val;
-        
-    }
-    
     static DefaultValues = class{
         static LOAD_EVENT_NAME = "load";
         static KOMPACT_NAME_ATTRIBUTE = "name";
@@ -252,6 +240,26 @@ class Kompacted{
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
         static FOREACH_KOMP_DATA_ATTRIBUTE = "loop-data";
         static FOREACH_COUNT_ATTRIBUTE = "count";
+        
+        
+        static edit(old_val, new_val){
+            console.warn(`[DefaultValues] (edit): This method may cause unpredictable behaviours. ('${old_val}' => '${new_val}')`);
+            
+            let key;
+            
+            if(typeof(old_val) !== typeof(7)){
+                for(let keys in this){
+                    if(this[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
+                    if(this[keys]===old_val) key = keys;
+                }
+                if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
+            }
+            else{
+                key = this.getKeyByIndex(old_val);
+            }
+            
+            this[key] = new_val;
+        }
         
         static getKeyByIndex(index){
             const values = Object.keys(this);
