@@ -23,7 +23,7 @@ window.addEventListener("load", ()=>{
             </div>
             `,
             "load", (self)=>{
-                let index = self.getAttribute('data');
+                let index = self.Values().data;
                 let info = self.getAttribute('info');
                 let ps = self.getElementsByTagName('p');
                 let user = users[index];
@@ -60,8 +60,8 @@ window.addEventListener("load", ()=>{
             <p>email</p>
             `,
             "load", (self)=>{
-                let name = self.getAttribute('name');
-                let email = self.getAttribute('email');
+                let name = self.Values().name;
+                let email = self.Values().email;
                 let ps = self.getElementsByTagName('p');
                 ps[0].innerText=name;
                 ps[1].innerText=email;
