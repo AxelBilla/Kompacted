@@ -58,18 +58,16 @@ class Kompacted{
     
     loadForeach(scope, deep=false){
         let foreach = scope.getElementsByTagName("foreach");
-
+        
         if(!deep) {
-            for (let i = 0; i < foreach; i++) {
-                let komp = this.getKomp(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE));
+            for (let i = 0; i < foreach.length; i++) {
                 let data = this.getData(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
-                this.setKomps(foreach[i], komp, data, deep);
+                this.setKomps(foreach[i], data, deep);
             }
         } else {
             while (foreach.length !== 0) {
-                let komp = this.getKomp(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE));
                 let data = this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
-                this.setKomps(foreach[0], komp, data, deep);
+                this.setKomps(foreach[0], data, deep);
             }
         }
     }
@@ -80,34 +78,41 @@ class Kompacted{
         else target.replaceChildren(komp);
     }
     
-    setKomps(target, komp, data, deep=false){
+    setKomps(target, data, deep=false){
+        let komp_name = target.getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE);
+        
         for(let entry in data){
-            let new_komp = komp;
-            for(let attribute in data[entry]){
-                new_komp.setAttribute(attribute, data[entry][attribute]);
-            }
-            if(!deep) target.appendChild(new_komp);
-            else target.parentNode.insertBefore(new_komp, target)
+            let komp = this.getKomp(komp_name, data[entry]);
+            
+            if(!deep) target.appendChild(komp);
+            else target.parentNode.insertBefore(komp, target)
         }
-        //if(deep) target.remove();
+        if(deep) target.remove();
     }
 
-    getKomp(kompact){
+    getKomp(kompact, attributes=undefined){
         if(typeof(kompact)!==typeof("u")){
             let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
             let template = this.getTemplate(name);
-            return this.createKomp(template, kompact);
+            return this.createKomp(template, attributes, kompact);
         }
         else {
             let template = this.getTemplate(kompact);
-            return this.createKomp(template);
+            return this.createKomp(template, attributes);
         }
     }
     
     // Turns a template into a working Komp (node)
-    createKomp(template, origin_kompact=undefined){
+    createKomp(template, data=undefined, origin_kompact=undefined){
         let komp = document.createElement(template.name);
         komp.innerHTML = template.html;
+        
+        if(!isNull(data)){
+            for(let attribute in data){
+                let attr_data = typeof(data[attribute]) === typeof({}) ? JSON.stringify(data[attribute]) : data[attribute];
+                komp.setAttribute(attribute, attr_data);
+            }
+        }
          
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
@@ -115,7 +120,7 @@ class Kompacted{
                 if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
             }
         }
-
+        
         if(!isNull(template.type)){
             komp.addEventListener(template.type, ()=>{template.func(komp)});
             if(template.type == Kompacted.DefaultValues.LOAD_EVENT_NAME) {
