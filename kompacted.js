@@ -100,12 +100,12 @@ class Kompacted{
         
         if(typeof(data)===typeof({})){
             for(let entry in data){
-                let komp = this.getKomp(komp_name, data[entry]);
+                let komp = this.getKomp(komp_name, data[entry], target);
                 appendKomp(target, komp, deep);
             }
         } else {
             for(let i = 0; i<data; i++){
-                let komp = this.getKomp(komp_name);
+                let komp = this.getKomp(komp_name, undefined, target);
                 appendKomp(target, komp, deep);
             }
             
@@ -114,15 +114,15 @@ class Kompacted{
     }
 
     // Generates a given Komp from a given name/HTML node
-    getKomp(kompact, attributes=undefined){
+    getKomp(kompact, data_attributes=undefined, origin_kompact=undefined){
         if(typeof(kompact)!==typeof("u")){
             let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
             let template = this.getTemplate(name);
-            return this.createKomp(template, attributes, kompact);
+            return this.createKomp(template, data_attributes, kompact);
         }
         else {
             let template = this.getTemplate(kompact);
-            return this.createKomp(template, attributes);
+            return this.createKomp(template, data_attributes, origin_kompact);
         }
     }
     
@@ -141,7 +141,9 @@ class Kompacted{
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
             for(let i=0; i<attributes.length; i++){
-                if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
+                let condition = (attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE) 
+                if(condition) komp.setAttribute(attributes[i].name, attributes[i].value);
+
             }
         }
         
@@ -238,7 +240,6 @@ class Kompacted{
         static KOMPACT_NAME_ATTRIBUTE = "name";
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
-        static FOREACH_KOMP_DATA_ATTRIBUTE = "loop-data";
         static FOREACH_COUNT_ATTRIBUTE = "count";
         
         
