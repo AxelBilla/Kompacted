@@ -17,6 +17,7 @@ class Kompacted{
         return template;
     }
 
+    // Replace an existing template with new data
     edit(name, html, type=undefined, func=()=>{}){
         let template = new Kompacted.template(name, html, type, func);
         this.editTemplate(name, template);
@@ -29,6 +30,7 @@ class Kompacted{
         this.loadForeach(scope, deep);
     }
     
+    // Sets a Data array to a given identifier
     set(id, data_array){
        this.setData(id, data_array); 
     }
@@ -39,7 +41,7 @@ class Kompacted{
                             // DEV SIDE //
 
     //// KOMPS ////
-    // Gets all Kompact tags within the scope and turns them into Komps
+    // Gets all Kompact tags within a given scope and turns them into Komps
     loadKompacts(scope, deep=false){
         let kompacts = scope.getElementsByTagName("kompact");
 
@@ -56,49 +58,71 @@ class Kompacted{
         }
     }
     
+    // Gets all Foreach tags within a given scope and turns them into a list of given Komps
     loadForeach(scope, deep=false){
         let foreach = scope.getElementsByTagName("foreach");
         
         if(!deep) {
             for (let i = 0; i < foreach.length; i++) {
-                let data = this.getData(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
+                let hasData = foreach[i].hasAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE);
+                let hasCount = foreach[i].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
+                if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
+                
+                let data = (hasData) ? this.getData(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 this.setKomps(foreach[i], data, deep);
             }
         } else {
             while (foreach.length !== 0) {
-                let data = this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE));
+                let hasData = foreach[0].hasAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE);
+                let hasCount = foreach[0].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
+                if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
+                
+                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 this.setKomps(foreach[0], data, deep);
             }
         }
     }
 
-    // Adds the node for our Komp as a children of its HTML Kompact tag
+    // Adds the node for our Komp as a children of its HTML Kompact tag OR replace its HTML Kompact tag (deep)
     setKomp(target, komp, deep=false){
         if(deep) target.replaceWith(komp);
         else target.replaceChildren(komp);
     }
     
+    // Adds a given amount (count/data amount) of nodes of a given Komp
     setKomps(target, data, deep=false){
         let komp_name = target.getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE);
         
-        for(let entry in data){
-            let komp = this.getKomp(komp_name, data[entry]);
-            
+        const appendKomp = (target, komp, deep)=>{
             if(!deep) target.appendChild(komp);
             else target.parentNode.insertBefore(komp, target)
+        }
+        
+        if(typeof(data)===typeof({})){
+            for(let entry in data){
+                let komp = this.getKomp(komp_name, data[entry], target);
+                appendKomp(target, komp, deep);
+            }
+        } else {
+            for(let i = 0; i<data; i++){
+                let komp = this.getKomp(komp_name, undefined, target);
+                appendKomp(target, komp, deep);
+            }
+            
         }
         if(deep) target.remove();
     }
 
-    getKomp(kompact, attributes=undefined){
+    // Generates a given Komp from a given name/HTML node
+    getKomp(kompact, data_attributes=undefined, origin_kompact=undefined){
         if(typeof(kompact)!==typeof("u")){
             let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
             let template = this.getTemplate(name);
-            return this.createKomp(template, attributes, kompact);
+            return this.createKomp(template, data_attributes, kompact);
         }
         else {
             let template = this.getTemplate(kompact);
-            return this.createKomp(template, attributes);
+            return this.createKomp(template, data_attributes, origin_kompact);
         }
     }
     
@@ -107,7 +131,7 @@ class Kompacted{
         let komp = document.createElement(template.name);
         komp.innerHTML = template.html;
         
-        if(!isNull(data)){
+        if(!isNull(data) && typeof(data)===typeof({})){
             for(let attribute in data){
                 let attr_data = typeof(data[attribute]) === typeof({}) ? JSON.stringify(data[attribute]) : data[attribute];
                 komp.setAttribute(attribute, attr_data);
@@ -117,7 +141,9 @@ class Kompacted{
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
             for(let i=0; i<attributes.length; i++){
-                if(attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE) komp.setAttribute(attributes[i].name, attributes[i].value);
+                let condition = (attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE) 
+                if(condition) komp.setAttribute(attributes[i].name, attributes[i].value);
+
             }
         }
         
@@ -169,11 +195,13 @@ class Kompacted{
     template_list = {};
     
     
-    
+    //// DATA ARRAYS ////
+    // Sets a space in the stored Data Arrays (identifier) for a given set of Data
     setData(identifier, array){
         this.stored_data_arrays[identifier]=array;
     }
     
+    // Get a Data Array by its identifier
     getData(identifier){
         if(!this.stored_data_arrays.hasOwnProperty(identifier)) {
             throw Kompacted.Errors.VALUE_NOT_FOUND+` ('${identifier}') `;
@@ -181,9 +209,13 @@ class Kompacted{
         return this.stored_data_arrays[identifier];
     }
 
-    //
+    // Saves all necessary Data Arrays
     stored_data_arrays ={};
 
+    
+    
+    
+    //// UTILITIES ////
     static template = class {
         constructor(name, html, type=undefined, func=()=>{}) {
             this.name = name;
@@ -199,28 +231,8 @@ class Kompacted{
         static VALUE_NOT_FOUND = "[ERROR]: Value could not be found";  
         static VALUE_OUT_OF_BOUNDS = "[ERROR]: Value out of bounds";
         static VALUE_ALREADY_EXISTS = "[ERROR]: Value already exists";
+        static INVALID_HTML_TAG = "[ERROR]: HTML Tag is improperly set";
         static UNAUTHORIZED_USE = "[ERROR]: This method should not be accessed manually";
-    }
-    
-    
-    static editDefaultValues(old_val, new_val){
-        console.warn("(editDefaultValues): This method may cause unpredictable behaviours.");
-        
-        let key;
-        
-        if(typeof(old_val) !== typeof(7)){
-            for(let keys in Kompacted.DefaultValues){
-                if(Kompacted.DefaultValues[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
-                if(Kompacted.DefaultValues[keys]===old_val) key = keys;
-            }
-            if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
-        }
-        else{
-            key = Kompacted.DefaultValues.getKeyByIndex(old_val);
-        }
-        
-        Kompacted.DefaultValues[key] = new_val;
-        
     }
     
     static DefaultValues = class{
@@ -228,7 +240,27 @@ class Kompacted{
         static KOMPACT_NAME_ATTRIBUTE = "name";
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
-        static FOREACH_KOMP_DATA_ATTRIBUTE = "loop-data";
+        static FOREACH_COUNT_ATTRIBUTE = "count";
+        
+        
+        static edit(old_val, new_val){
+            console.warn(`[DefaultValues] (edit): This method may cause unpredictable behaviours. ('${old_val}' => '${new_val}')`);
+            
+            let key;
+            
+            if(typeof(old_val) !== typeof(7)){
+                for(let keys in this){
+                    if(this[keys]===new_val) console.warn(Kompacted.Errors.VALUE_ALREADY_EXISTS+` (${new_val})`);
+                    if(this[keys]===old_val) key = keys;
+                }
+                if(key==undefined) throw Kompacted.Errors.VALUE_NOT_FOUND+` (${old_val})`;
+            }
+            else{
+                key = this.getKeyByIndex(old_val);
+            }
+            
+            this[key] = new_val;
+        }
         
         static getKeyByIndex(index){
             const values = Object.keys(this);
@@ -238,6 +270,20 @@ class Kompacted{
         
     }
 }
+
+// Streamlined access to attribute values
+HTMLElement.prototype.Values = function(omit=[]){
+    let attribute_list = {};
+    for(let i = 0; i<this.attributes.length; i++){
+        let attr = this.attributes[i];
+        if(omit.includes(attr.name)) continue;
+        attribute_list[attr.name]=attr.value;
+    }
+    
+    return attribute_list;
+}
+
+
 
 function isNull(object){
     if(object === null || object === undefined || object === "" || (typeof(object)===typeof(0) && isNaN(object)) ) return true;
