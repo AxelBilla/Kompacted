@@ -68,7 +68,7 @@ class Kompacted{
                 let hasCount = foreach[i].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
                 
-                let data = (hasData) ? this.getData(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
+                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
                 this.setKomps(foreach[i], data, deep);
             }
         } else {
@@ -77,7 +77,7 @@ class Kompacted{
                 let hasCount = foreach[0].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
                 
-                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
+                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
                 this.setKomps(foreach[0], data, deep);
             }
         }
@@ -98,7 +98,7 @@ class Kompacted{
             else target.parentNode.insertBefore(komp, target)
         }
         
-        if(typeof(data)===typeof({})){
+        if(!data.hasOwnProperty(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)){
             for(let entry in data){
                 let komp = this.getKomp(komp_name, data[entry], target);
                 appendKomp(target, komp, deep);
@@ -131,10 +131,15 @@ class Kompacted{
         let komp = document.createElement(template.name);
         komp.innerHTML = template.html;
         
-        if(!isNull(data) && typeof(data)===typeof({})){
-            for(let attribute in data){
-                let attr_data = typeof(data[attribute]) === typeof({}) ? JSON.stringify(data[attribute]) : data[attribute];
-                komp.setAttribute(attribute, attr_data);
+        
+        if(!isNull(data) && !data.hasOwnProperty(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)){
+            if(typeof(data)!==typeof({})){
+                komp.setAttribute(Kompacted.DefaultValues.DATA_ATTRIBUTE, data);
+            } else {
+                for(let attribute in data){
+                    let attr_data = typeof(data[attribute]) === typeof({}) ? JSON.stringify(data[attribute]) : data[attribute];
+                    komp.setAttribute(attribute, attr_data);
+                }
             }
         }
          
@@ -241,6 +246,7 @@ class Kompacted{
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
         static FOREACH_COUNT_ATTRIBUTE = "count";
+        static DATA_ATTRIBUTE = "data";
         
         
         static edit(old_val, new_val){
