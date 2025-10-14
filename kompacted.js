@@ -43,7 +43,7 @@ class Kompacted{
     //// KOMPS ////
     // Gets all Kompact tags within a given scope and turns them into Komps
     loadKompacts(scope, deep=false){
-        let kompacts = scope.getElementsByTagName("kompact");
+        let kompacts = scope.getElementsByTagName(Kompacted.DefaultValues.KOMPACT_HTML_TAG);
 
         if(!deep) {
             for (let i = 0; i < kompacts.length; i++) {
@@ -60,7 +60,7 @@ class Kompacted{
     
     // Gets all Foreach tags within a given scope and turns them into a list of given Komps
     loadForeach(scope, deep=false){
-        let foreach = scope.getElementsByTagName("foreach");
+        let foreach = scope.getElementsByTagName(Kompacted.DefaultValues.FOREACH_HTML_TAG);
         
         if(!deep) {
             for (let i = 0; i < foreach.length; i++) {
@@ -104,7 +104,7 @@ class Kompacted{
                 appendKomp(target, komp, deep);
             }
         } else {
-            for(let i = 0; i<data; i++){
+            for(let i = 0; i<data[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]; i++){
                 let komp = this.getKomp(komp_name, undefined, target);
                 appendKomp(target, komp, deep);
             }
@@ -241,7 +241,10 @@ class Kompacted{
     }
     
     static DefaultValues = class{
+        static KOMPACT_HTML_TAG = "kompact";
+        static FOREACH_HTML_TAG = "foreach";
         static LOAD_EVENT_NAME = "load";
+        
         static KOMPACT_NAME_ATTRIBUTE = "name";
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
