@@ -55,7 +55,7 @@ window.addEventListener("load", ()=>{
         
         kmptd.add("test_comp_three",
             `
-            <h1>forEach</h1>
+            <h1>forEach (users)</h1>
             <p>name</p>
             <p>email</p>
             `,
@@ -67,6 +67,21 @@ window.addEventListener("load", ()=>{
                 ps[1].innerText=email;
             }
         );
+        
+        kmptd.set("arr", [643, 864, 455])
+        
+        kmptd.add("test_comp_four",
+            `
+            <h1>forEach (num)</h1>
+            <p>Number: <span>x</span></p>
+            `,
+            "load", (self)=>{
+                let num = self.Values().data;
+                let spn = self.getElementsByTagName('span');
+                spn[0].innerText=num;
+            }
+        );
+        
     }, document.getElementById("twos"))  
 
 })
