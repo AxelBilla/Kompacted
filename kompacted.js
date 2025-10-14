@@ -99,7 +99,13 @@ class Kompacted{
         }
         
         if(!data.hasOwnProperty(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)){
+            let start = (target.hasAttribute(Kompacted.DefaultValues.FOREACH_START_ATTRIBUTE)) ? target.getAttribute(Kompacted.DefaultValues.FOREACH_START_ATTRIBUTE) : 0;
+            let end = (target.hasAttribute(Kompacted.DefaultValues.FOREACH_END_ATTRIBUTE)) ? target.getAttribute(Kompacted.DefaultValues.FOREACH_END_ATTRIBUTE) : data.length;
+            let count = 0;
             for(let entry in data){
+                count++;
+                if(count<start) continue;
+                if(count>end) break;
                 let komp = this.getKomp(komp_name, data[entry], target);
                 appendKomp(target, komp, deep);
             }
@@ -146,9 +152,8 @@ class Kompacted{
         if(origin_kompact!=null){
             let attributes = origin_kompact.attributes;
             for(let i=0; i<attributes.length; i++){
-                let condition = (attributes[i].name!=Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE && attributes[i].name!=Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE) 
+                let condition = (!Kompacted.DefaultValues.isDefault(attributes[i].name, "ATTRIBUTE") || attributes[i].name === Kompacted.DefaultValues.DATA_ATTRIBUTE) 
                 if(condition) komp.setAttribute(attributes[i].name, attributes[i].value);
-
             }
         }
         
@@ -249,9 +254,9 @@ class Kompacted{
         static FOREACH_SOURCE_ATTRIBUTE = "src";
         static FOREACH_AS_KOMP_ATTRIBUTE = "as";
         static FOREACH_COUNT_ATTRIBUTE = "count";
+        static FOREACH_START_ATTRIBUTE = "start";
+        static FOREACH_END_ATTRIBUTE = "end";
         static DATA_ATTRIBUTE = "data";
-        
-        
         static edit(old_val, new_val){
             console.warn(`[DefaultValues] (edit): This method may cause unpredictable behaviours. ('${old_val}' => '${new_val}')`);
             
@@ -277,6 +282,15 @@ class Kompacted{
             return values[index];
         }
         
+        static isDefault(value, snippet=""){
+            const values = Object.values(this);
+            const keys = Object.keys(this);
+            for(let default_value in values){
+                if(!keys[default_value].includes(snippet)) continue;
+                if(values[default_value]===value) return true;
+            }
+            return false;
+        }
     }
 }
 
