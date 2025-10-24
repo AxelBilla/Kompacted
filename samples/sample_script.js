@@ -8,7 +8,9 @@ class User{
 const users = [
     new User("john", "notwit@gmail.com"),
     new User("remie", "baba@nihon.jp"),
-    new User("bella", "kanougo.deria@free.fr")
+    new User("bella", "kanougo.deria@free.fr"),
+    new User("harry", "myhappyrom@doug.uk"),
+    new User("koal", "koal.enterprise@koal.tv")
 ]
 
 window.addEventListener("load", ()=>{
