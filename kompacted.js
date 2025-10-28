@@ -32,6 +32,7 @@ class Kompacted{
     
     // (re)Loads all the Komps within a given scope of all the given instances of Kompacted 
     static load(scope, deep, ...kompacted){
+        if(isNull(kompacted)) kompacted = Kompacted.unnamed_list;
         for(let KMPTD of kompacted[0]) {
             KMPTD.load(scope, deep)
         }
@@ -47,6 +48,33 @@ class Kompacted{
 
                             // DEV SIDE //
 
+    static unnamed_list = [];
+    static named_list = {};
+    constructor(saved=true, name="") {
+        if(saved) {
+            Kompacted.unnamed_list.push(this)
+            if (!isNull(name)) Kompacted.named_list[name] = this;
+        }
+    }
+    
+    static getAllKompacted(){
+        return Kompacted.unnamed_list;
+    }
+    
+    static getKompacted(identifier){
+        if(Kompacted.hasKompacted(identifier)){
+            return Kompacted.named_list[identifier];
+        }
+        else if (Kompacted.unnamed_list.length > identifier){
+            return Kompacted.unnamed_list[identifier];
+        }
+        throw "[getKompacted]: "+Kompacted.Errors.VALUE_NOT_FOUND+` (${identifier})`;
+    }
+
+    static hasKompacted(name){
+        return Kompacted.named_list.hasOwnProperty(name);
+    }
+    
     //// KOMPS ////
     // Gets all Kompact tags within a given scope and turns them into Komps
     loadKompacts(scope, deep=false){
