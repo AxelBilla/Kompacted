@@ -82,18 +82,34 @@ class Kompacted{
     
         if(!deep) {
             for (let i = 0; i < kompacts.length; i++) {
-                if (!this.hasTemplate(kompacts[i].getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE))) continue;
-                let komp = this.getKomp(kompacts[i]);
+                if (!this.hasTemplate(kompacts[i].getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE))) continue;
+                
+                let data;
+                let hasData = kompacts[i].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE);
+                let hasIndex = kompacts[i].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE_INDEX);
+                
+                if(hasData) data = this.getData(kompacts[i].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE));
+                if(hasIndex) data = data[kompacts[i].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE_INDEX)];
+                
+                let komp = this.getKomp(kompacts[i], data);
                 this.setKomp(kompacts[i], komp, deep);
             }
         } else {
             let skips = 0;
             while (kompacts.length!==0 && skips<kompacts.length) {
-                if (!this.hasTemplate(kompacts[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE))) {
+                if (!this.hasTemplate(kompacts[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE))) {
                     skips++;
                     continue;
                 }
-                let komp = this.getKomp(kompacts[skips]);
+                
+                let data;
+                let hasData = kompacts[skips].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE);
+                let hasIndex = kompacts[skips].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE_INDEX);
+
+                if(hasData) data = this.getData(kompacts[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE));
+                if(hasIndex) data = data[kompacts[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE_INDEX)];
+                
+                let komp = this.getKomp(kompacts[skips], data);
                 this.setKomp(kompacts[skips], komp, deep);
             }
         }
@@ -104,26 +120,27 @@ class Kompacted{
         let foreach = scope.getElementsByTagName(Kompacted.DefaultValues.FOREACH_HTML_TAG);
         if(!deep) {
             for (let i = 0; i < foreach.length; i++) {
-                if (!this.hasTemplate(foreach[i].getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE))) continue;
-                let hasData = foreach[i].hasAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE);
+                if (!this.hasTemplate(foreach[i].getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE))) continue;
+                let hasData = foreach[i].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE);
                 let hasCount = foreach[i].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
                 
-                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
+                let data = (hasData) ? this.getData(foreach[0].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[0].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
                 this.setKomps(foreach[i], data, deep);
             }
         } else {
             let skips = 0;
             while (foreach.length!==0 && skips<foreach.length) {
-                if (!this.hasTemplate(foreach[skips].getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE))) {
+                if (!this.hasTemplate(foreach[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE))) {
                     skips++;
                     continue;
                 }
-                let hasData = foreach[skips].hasAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE);
+                
+                let hasData = foreach[skips].hasAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE);
                 let hasCount = foreach[skips].hasAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE);
                 if(!(hasData || hasCount)) throw Kompacted.Errors.INVALID_HTML_TAG+` (${target})`
                 
-                let data = (hasData) ? this.getData(foreach[skips].getAttribute(Kompacted.DefaultValues.FOREACH_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[skips].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
+                let data = (hasData) ? this.getData(foreach[skips].getAttribute(Kompacted.DefaultValues.KOMPACT_SOURCE_ATTRIBUTE)) : {[Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE]: foreach[skips].getAttribute(Kompacted.DefaultValues.FOREACH_COUNT_ATTRIBUTE)};
                 this.setKomps(foreach[skips], data, deep);
             }
         }
@@ -137,7 +154,7 @@ class Kompacted{
     
     // Adds a given amount (count/data amount) of nodes of a given Komp
     setKomps(target, data, deep=false){
-        let komp_name = target.getAttribute(Kompacted.DefaultValues.FOREACH_AS_KOMP_ATTRIBUTE);
+        let komp_name = target.getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE);
         const appendKomp = (target, komp, deep)=>{
             if(!deep) target.appendChild(komp);
             else target.parentNode.insertBefore(komp, target)
@@ -167,7 +184,7 @@ class Kompacted{
     // Generates a given Komp from a given name/HTML node
     getKomp(kompact, data_attributes=undefined, origin_kompact=undefined){
         if(typeof(kompact)!==typeof("u")){
-            let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_NAME_ATTRIBUTE);
+            let name = kompact.getAttribute(Kompacted.DefaultValues.KOMPACT_AS_KOMP_ATTRIBUTE);
             let template = this.getTemplate(name);
             return this.createKomp(template, data_attributes, kompact);
         }
@@ -304,9 +321,9 @@ class Kompacted{
         static FOREACH_HTML_TAG = "foreach";
         static LOAD_EVENT_NAME = "load";
         
-        static KOMPACT_NAME_ATTRIBUTE = "name";
-        static FOREACH_SOURCE_ATTRIBUTE = "src";
-        static FOREACH_AS_KOMP_ATTRIBUTE = "as";
+        static KOMPACT_SOURCE_ATTRIBUTE_INDEX = "index";
+        static KOMPACT_SOURCE_ATTRIBUTE = "src";
+        static KOMPACT_AS_KOMP_ATTRIBUTE = "as";
         static FOREACH_COUNT_ATTRIBUTE = "count";
         static FOREACH_START_ATTRIBUTE = "start";
         static FOREACH_END_ATTRIBUTE = "end";
