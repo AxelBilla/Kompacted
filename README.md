@@ -16,6 +16,13 @@
 <h2 align="center">Basics</h2>
 <p align="right">? = Optional</p>
 
+### `new Kompacted(?saved, ?name)` : `Kompacted`
+    (boolean)     [saved]: Whether this instance should be saved statically (accessible via Kompacted.getKompacted()) or not.
+    (string)      [name]: Identifier of this instance.
+  <p align="center">Creation of a Kompacted instance to work with (may or may not be accessible statically)</p>
+  <br>
+<h2 align="center"></h2>
+
 ### `Kompacted.new(templates, ?scope, ?deep)` : `void`
     (func)        [templates]: Collection of Kompacted.add() wrapped in a function.
     (HTMLElement) [scope]: Element from which to start a Kompacted.load().
