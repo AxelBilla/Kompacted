@@ -65,7 +65,7 @@
     (boolean)     [depth]: Whether Komps should be children of their Kompact/Foreach or replace them.
     (object)      [kompacted]: List of Kompacted instances to load Komps from.
     
-  <p align="center">Loads all Komps of its Kompacted instance.</p>
+  <p align="center">Allows users to load Komps from different instances of Kompacted at once.</p>
   <br>
 <br>
 <br>
